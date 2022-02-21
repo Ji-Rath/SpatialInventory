@@ -1,0 +1,30 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "SpatialInventory",
+	"Description": "",
+	"Category": "Other",
+	"CreatedBy": "Gareth Aguilar",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"name": "SpatialInventory",
+			"type": "Runtime",
+			"loadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "InteractionSystem",
+			"Enabled": true
+		}
+	]
+}
