@@ -108,7 +108,7 @@ bool UInventoryBaseWidget::Initialize()
 		{
 			InventoryReference->OnItemAdded.AddDynamic(this, &UInventoryBaseWidget::AddItem);
 			InventoryReference->OnToggleInventory.AddDynamic(this, &UInventoryBaseWidget::ToggleInventory);
-			ConstructGrid(InventoryReference->InventorySize);
+			ConstructGrid(InventoryReference->InventoryDimensions);
 		}
 	}
 

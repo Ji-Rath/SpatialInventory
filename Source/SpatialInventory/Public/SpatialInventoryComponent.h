@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "SpatialItemData.h"
 #include "Inventory/InventoryComponent.h"
+#include "Inventory/InventoryInterface.h"
 #include "SpatialInventoryComponent.generated.h"
 
 class UGridPanel;
@@ -15,7 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FItemAdded, USpatialItemData*, Item
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FToggleInventory, bool, bOpen, APlayerController*, Interactor);
 
 UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class SPATIALINVENTORY_API USpatialInventoryComponent : public UInventoryComponent
+class SPATIALINVENTORY_API USpatialInventoryComponent : public UActorComponent, public IInventoryInterface
 {
 	GENERATED_BODY()
 
@@ -32,7 +33,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FIntVector2D InventorySize;
+	FIntVector2D InventoryDimensions;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FSlotData> Inventory;
@@ -68,6 +69,19 @@ public:
 	/** Get the total value of the inventory */
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetInventoryValue();
+
+	/** Remove an item from current inventory */
+	void RemoveFromInventory_Implementation(const UItemData* Item, const int Count = 1);
+
+	/**
+	 * Attempt to add an item to the inventory
+	 * @param Item - Item to add
+	 * @param Count - Amount of item
+	 * @return Whether the item could be added to the inventory
+	*/
+	bool AddToInventory_Implementation(UItemData* Item, const int Count);
+	
+	bool DoesItemExist_Implementation(UItemData* Item);
 
 	UPROPERTY(BlueprintAssignable)
 	FItemAdded OnItemAdded;

@@ -20,7 +20,7 @@ void USpatialInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Inventory.AddDefaulted(InventorySize.X * InventorySize.Y);
+	Inventory.AddDefaulted(InventoryDimensions.X * InventoryDimensions.Y);
 }
 
 
@@ -113,12 +113,12 @@ bool USpatialInventoryComponent::HasAvailableSpace(FIntVector2D Position, FIntVe
 
 	for (int XPos = Position.X; XPos < ItemSize.X+Position.X; XPos++)
 	{
-		if (XPos < InventorySize.X)
+		if (XPos < InventoryDimensions.X)
 		{
 			for (int YPos = Position.Y; YPos < ItemSize.Y+Position.Y; YPos++)
 			{
 				//First make sure slot that we are checking is not out of bounds
-				if (YPos < InventorySize.Y)
+				if (YPos < InventoryDimensions.Y)
 				{
 					int IndexToCheck = PosToIndex(FIntVector2D(XPos, YPos));
 					FSlotData SlotCheck = Inventory[IndexToCheck];
@@ -152,7 +152,7 @@ int USpatialInventoryComponent::PosToIndex(FIntVector2D Position)
 {
 	int ReturnIndex = 0;
 	ReturnIndex += Position.X;
-	ReturnIndex += Position.Y * InventorySize.X;
+	ReturnIndex += Position.Y * InventoryDimensions.X;
 
 	return ReturnIndex;
 
@@ -169,12 +169,27 @@ float USpatialInventoryComponent::GetInventoryValue()
 	return Value;
 }
 
+void USpatialInventoryComponent::RemoveFromInventory_Implementation(const UItemData* Item, const int Count)
+{
+	IInventoryInterface::RemoveFromInventory_Implementation(Item, Count);
+}
+
+bool USpatialInventoryComponent::AddToInventory_Implementation(UItemData* Item, const int Count)
+{
+	return IInventoryInterface::AddToInventory_Implementation(Item, Count);
+}
+
+bool USpatialInventoryComponent::DoesItemExist_Implementation(UItemData* Item)
+{
+	return IInventoryInterface::DoesItemExist_Implementation(Item);
+}
+
 FIntVector2D USpatialInventoryComponent::IndexToPos(int Index)
 {
 	FIntVector2D ReturnPosition;
 
-	ReturnPosition.Y = Index / InventorySize.X;
-	ReturnPosition.X = Index % InventorySize.X;
+	ReturnPosition.Y = Index / InventoryDimensions.X;
+	ReturnPosition.X = Index % InventoryDimensions.X;
 
 	return ReturnPosition;
 }
