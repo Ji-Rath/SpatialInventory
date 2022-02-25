@@ -29,6 +29,16 @@ struct FIntVector2D
 		X = XVal;
 		Y = YVal;
 	};
+
+	FORCEINLINE FIntVector2D operator-(const FIntVector2D& V) const
+	{
+		return FIntVector2D(X - V.X, Y - V.Y);
+	}
+	
+	FORCEINLINE bool operator==(const FIntVector2D& V) const
+	{
+		return V.X == X && V.Y == Y;
+	}
 };
 
 USTRUCT(BlueprintType)
