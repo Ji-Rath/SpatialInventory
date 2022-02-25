@@ -68,12 +68,12 @@ bool USpatialInventoryComponent::AddToSlot(USpatialItemData* Item, FIntVector2D 
 	return false;
 }
 
-void USpatialInventoryComponent::RemoveItem(FIntVector2D Size, FIntVector2D Position)
+void USpatialInventoryComponent::RemoveItem(USpatialItemData* Item, FIntVector2D Position)
 {
 	int SlotNum = PosToIndex(Position);
 	Inventory[SlotNum].Item = nullptr;
 
-	TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Size, Position);
+	TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position);
 	SetOccupied(false, SpaceTaken);
 }
 
@@ -206,4 +206,5 @@ TArray<USpatialItemData*> USpatialInventoryComponent::GetItems()
 	}
 	return Items;
 }
+
 

@@ -45,7 +45,7 @@ public:
 	bool AddToSlot(USpatialItemData* Item, FIntVector2D Position);
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveItem(FIntVector2D Size, FIntVector2D Position);
+	void RemoveItem(USpatialItemData* Item, FIntVector2D Position);
 
 	UFUNCTION(BlueprintCallable)
 	void SetOccupied(bool bOccupied, TArray<FIntVector2D> Positions);
