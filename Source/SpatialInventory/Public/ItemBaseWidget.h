@@ -20,8 +20,6 @@ class SPATIALINVENTORY_API UItemBaseWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	UItemBaseWidget(const FObjectInitializer& ObjectInitializer);
-
 	UFUNCTION(BlueprintCallable)
 	void ConstructGrid(FIntVector2D Size);
 

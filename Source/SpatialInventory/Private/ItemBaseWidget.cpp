@@ -6,11 +6,6 @@
 #include "Components/GridPanel.h"
 #include "TileBaseWidget.h"
 
-UItemBaseWidget::UItemBaseWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
-{
-	ConstructGrid(FIntVector2D(3, 3));
-}
-
 void UItemBaseWidget::ConstructGrid(FIntVector2D Size)
 {
 	for (int i = Position.X; i < Size.X+Position.X; i++)
