@@ -20,8 +20,8 @@ struct FIntVector2D
 
 	FIntVector2D()
 	{
-		X = 1;
-		Y = 1;
+		X = 0;
+		Y = 0;
 	};
 
 	FIntVector2D(int XVal, int YVal)
@@ -30,10 +30,21 @@ struct FIntVector2D
 		Y = YVal;
 	};
 
+	FIntVector2D(int Val)
+	{
+		X = Val;
+		Y = Val;
+	};
+
 	FORCEINLINE FIntVector2D operator-(const FIntVector2D& V) const
 	{
 		return FIntVector2D(X - V.X, Y - V.Y);
 	}
+	
+	FORCEINLINE FIntVector2D operator+(const FIntVector2D& V) const
+    	{
+    		return FIntVector2D(X + V.X, Y + V.Y);
+    	}
 	
 	FORCEINLINE bool operator==(const FIntVector2D& V) const
 	{
