@@ -32,7 +32,7 @@ void USpatialInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	// ...
 }
 
-bool USpatialInventoryComponent::TryAddItem(USpatialItemData* Item)
+bool USpatialInventoryComponent::TryAddItem(USpatialItemData* Item, bool bRotated)
 {
 	if (ensure(Item))
 	{
@@ -40,47 +40,54 @@ bool USpatialInventoryComponent::TryAddItem(USpatialItemData* Item)
 		{
 			FSlotData Slot = Inventory[SlotNum];
 			FIntVector2D Position = IndexToPos(SlotNum);
-			bool bCanPlaceItem = HasAvailableSpace(Position, Item->Size);
+			bool bCanPlaceItem = HasAvailableSpace(Position, Item->Size, bRotated);
 
 			if (bCanPlaceItem)
 			{
 				Inventory[SlotNum].Item = Item;
-				TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position);
+				Inventory[SlotNum].bRotated = bRotated;
+				TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position, bRotated);
 				SetOccupied(true, SpaceTaken);
 				
-				OnItemAdded.Broadcast(Item, Position);
+				OnItemAdded.Broadcast(Item, Position, bRotated);
 				return true;
 			}
+		}
+		// Attempt to place item using rotated dimensions
+		if (!bRotated)
+		{
+			return TryAddItem(Item, true);
 		}
 	}
 	return false;
 }
 
-bool USpatialInventoryComponent::AddToSlot(USpatialItemData* Item, FIntVector2D Position)
+bool USpatialInventoryComponent::AddToSlot(USpatialItemData* Item, FIntVector2D Position, bool bRotated)
 {
-	bool bCanPlaceItem = HasAvailableSpace(Position, Item->Size);
+	bool bCanPlaceItem = HasAvailableSpace(Position, Item->Size, bRotated);
 
 	if (bCanPlaceItem)
 	{
 		int SlotNum = PosToIndex(Position);
 		Inventory[SlotNum].Item = Item;
+		Inventory[SlotNum].bRotated = bRotated;
 		
-		TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position);
+		TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position, bRotated);
 		SetOccupied(true, SpaceTaken);
 		
-		OnItemAdded.Broadcast(Item, Position);
+		OnItemAdded.Broadcast(Item, Position, bRotated);
 		return true;
 	}
 
 	return false;
 }
 
-void USpatialInventoryComponent::RemoveItem(USpatialItemData* Item, FIntVector2D Position)
+void USpatialInventoryComponent::RemoveItem(USpatialItemData* Item, FIntVector2D Position, bool bRotated)
 {
 	int SlotNum = PosToIndex(Position);
 	Inventory[SlotNum].Item = nullptr;
 
-	TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position);
+	TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position, bRotated);
 	SetOccupied(false, SpaceTaken);
 }
 
@@ -99,13 +106,15 @@ void USpatialInventoryComponent::SetOccupied(bool bOccupied, TArray<FIntVector2D
 	}
 }
 
-TArray<FIntVector2D> USpatialInventoryComponent::GetSpaceTaken(FIntVector2D Size, FIntVector2D Position)
+TArray<FIntVector2D> USpatialInventoryComponent::GetSpaceTaken(FIntVector2D Size, FIntVector2D Position, bool bRotated)
 {
 	TArray<FIntVector2D> FreeSlots;
-
-	for (int XPos = Position.X; XPos < Size.X + Position.X; XPos++)
+	int XSize = bRotated ? Size.Y : Size.X;
+	int YSize = bRotated ? Size.X : Size.Y;
+	
+	for (int XPos = Position.X; XPos < XSize + Position.X; XPos++)
 	{
-		for (int YPos = Position.Y; YPos < Size.Y + Position.Y; YPos++)
+		for (int YPos = Position.Y; YPos < YSize + Position.Y; YPos++)
 		{
 			FreeSlots.Add(FIntVector2D(XPos, YPos));
 		}
@@ -114,15 +123,18 @@ TArray<FIntVector2D> USpatialInventoryComponent::GetSpaceTaken(FIntVector2D Size
 	return FreeSlots;
 }
 
-bool USpatialInventoryComponent::HasAvailableSpace(FIntVector2D Position, FIntVector2D ItemSize)
+bool USpatialInventoryComponent::HasAvailableSpace(FIntVector2D Position, FIntVector2D ItemSize, bool bRotated)
 {
 	TArray<FIntVector2D> FreeSlots;
 
-	for (int XPos = Position.X; XPos < ItemSize.X+Position.X; XPos++)
+	int XSize = bRotated ? ItemSize.Y : ItemSize.X;
+	int YSize = bRotated ? ItemSize.X : ItemSize.Y;
+	
+	for (int XPos = Position.X; XPos < XSize+Position.X; XPos++)
 	{
 		if (XPos >= 0 && XPos < InventoryDimensions.X)
 		{
-			for (int YPos = Position.Y; YPos < ItemSize.Y+Position.Y; YPos++)
+			for (int YPos = Position.Y; YPos < YSize+Position.Y; YPos++)
 			{
 				//First make sure slot that we are checking is not out of bounds
 				if (YPos >= 0 && YPos < InventoryDimensions.Y)
@@ -149,9 +161,7 @@ bool USpatialInventoryComponent::HasAvailableSpace(FIntVector2D Position, FIntVe
 			return false;
 		}
 	}
-
-	//SetOccupied(true, FreeSlots);
-
+	
 	return true;
 }
 

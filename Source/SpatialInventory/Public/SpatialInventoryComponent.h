@@ -12,8 +12,9 @@
 class UGridPanel;
 class APlayerController;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FItemAdded, USpatialItemData*, Item, FIntVector2D, Position);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FItemAdded, USpatialItemData*, Item, FIntVector2D, Position, bool, bRotated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FToggleInventory, bool, bOpen, APlayerController*, Interactor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRotateItem);
 
 UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SPATIALINVENTORY_API USpatialInventoryComponent : public UActorComponent, public IInventoryInterface
@@ -39,22 +40,22 @@ public:
 	TArray<FSlotData> Inventory;
 
 	UFUNCTION(BlueprintCallable)
-	bool TryAddItem(USpatialItemData* Item);
+	bool TryAddItem(USpatialItemData* Item, bool bRotated);
 
 	UFUNCTION(BlueprintCallable)
-	bool AddToSlot(USpatialItemData* Item, FIntVector2D Position);
+	bool AddToSlot(USpatialItemData* Item, FIntVector2D Position, bool bRotated);
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveItem(USpatialItemData* Item, FIntVector2D Position);
+	void RemoveItem(USpatialItemData* Item, FIntVector2D Position, bool bRotated);
 
 	UFUNCTION(BlueprintCallable)
 	void SetOccupied(bool bOccupied, TArray<FIntVector2D> Positions);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	TArray<FIntVector2D> GetSpaceTaken(FIntVector2D Size, FIntVector2D Position);
+	TArray<FIntVector2D> GetSpaceTaken(FIntVector2D Size, FIntVector2D Position, bool bRotated);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	bool HasAvailableSpace(FIntVector2D Position, FIntVector2D ItemSize);
+	bool HasAvailableSpace(FIntVector2D Position, FIntVector2D ItemSize, bool bRotated);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FIntVector2D IndexToPos(int Index);
@@ -85,6 +86,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FItemAdded OnItemAdded;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FRotateItem OnRotateItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FToggleInventory OnToggleInventory;

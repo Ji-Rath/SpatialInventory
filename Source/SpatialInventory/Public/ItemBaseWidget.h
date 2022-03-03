@@ -21,7 +21,7 @@ class SPATIALINVENTORY_API UItemBaseWidget : public UUserWidget
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	void ConstructGrid(FIntVector2D Size);
+	void ConstructGrid(FIntVector2D Size, bool bRotated);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ExposeOnSpawn = "true"))
 	USpatialItemData* ItemData = nullptr;
@@ -37,5 +37,8 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 	UGridPanel* GridTiles = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ExposeOnSpawn = "true"))
+	bool bItemRotated = false;
 
 };

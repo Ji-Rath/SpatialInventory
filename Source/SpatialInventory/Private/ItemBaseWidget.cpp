@@ -6,11 +6,15 @@
 #include "Components/GridPanel.h"
 #include "TileBaseWidget.h"
 
-void UItemBaseWidget::ConstructGrid(FIntVector2D Size)
+void UItemBaseWidget::ConstructGrid(FIntVector2D Size, bool bRotated)
 {
-	for (int i = Position.X; i < Size.X+Position.X; i++)
+	GridTiles->ClearChildren();
+	int XSize = bRotated ? Size.Y : Size.X;
+	int YSize = bRotated ? Size.X : Size.Y;
+	
+	for (int i = Position.X; i < XSize+Position.X; i++)
 	{
-		for (int j = Position.Y; j < Size.Y+Position.Y; j++)
+		for (int j = Position.Y; j < YSize+Position.Y; j++)
 		{
 			auto* Tile = CreateWidget<UTileBaseWidget>(GetOwningPlayer(), SlotWidget);
 			if (Tile)

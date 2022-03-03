@@ -8,7 +8,7 @@
 #include "SpatialItemData.h"
 #include "InventoryBaseWidget.h"
 
-bool UTileBaseWidget::OnPlaceItem(FGeometry Geometry, FPointerEvent PointerEvent, UDragDropOperation* Operation, FIntVector2D Offset)
+bool UTileBaseWidget::OnPlaceItem(UDragDropOperation* Operation, FIntVector2D Offset, bool bRotated)
 {
 	bool bSuccess = false;
 	FIntVector2D ActualPosition = Position + Offset;
@@ -27,10 +27,10 @@ bool UTileBaseWidget::OnPlaceItem(FGeometry Geometry, FPointerEvent PointerEvent
 			if (ensure(ItemWidget && OtherInventoryComp && ItemWidget->ItemData && InventoryComp))
 			{
 				// Ensure the inventory that we are dropping the item to has space
-				bool bHasSpace = InventoryComp->HasAvailableSpace(ActualPosition, ItemWidget->ItemData->Size);
+				bool bHasSpace = InventoryComp->HasAvailableSpace(ActualPosition, ItemWidget->ItemData->Size, bRotated);
 				if (bHasSpace)
 				{
-					InventoryComp->AddToSlot(ItemWidget->ItemData, ActualPosition);
+					InventoryComp->AddToSlot(ItemWidget->ItemData, ActualPosition, bRotated);
 
 					// Update widget position value
 					ItemWidget->Position = ActualPosition;

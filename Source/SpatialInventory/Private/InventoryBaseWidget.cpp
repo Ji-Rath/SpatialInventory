@@ -31,7 +31,7 @@ void UInventoryBaseWidget::ConstructGrid(FIntVector2D Size)
 	}
 }
 
-void UInventoryBaseWidget::AddItem(USpatialItemData* ItemData, FIntVector2D Position)
+void UInventoryBaseWidget::AddItem(USpatialItemData* ItemData, FIntVector2D Position, bool bRotated)
 {
 	// Create item widget
 	UItemBaseWidget* Item = CreateWidget<UItemBaseWidget>(GetOwningPlayer(), ItemWidget);
@@ -40,6 +40,7 @@ void UInventoryBaseWidget::AddItem(USpatialItemData* ItemData, FIntVector2D Posi
 	Item->Position = Position;
 	Item->ItemData = ItemData;
 	Item->InventoryWidget = this;
+	Item->bItemRotated = bRotated;
 
 	// Set proper position of item widget
 	UCanvasPanelSlot* CanvasItem = CanvasItems->AddChildToCanvas(Item);
@@ -91,7 +92,7 @@ void UInventoryBaseWidget::ReconstructItems()
 		if (SlotData.Item != nullptr && SlotData.bTaken)
 		{
 			FIntVector2D Position = InventoryReference->IndexToPos(i);
-			AddItem(SlotData.Item, Position);
+			AddItem(SlotData.Item, Position, SlotData.bRotated);
 		}
 	}
 }

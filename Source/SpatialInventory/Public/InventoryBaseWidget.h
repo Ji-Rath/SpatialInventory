@@ -29,7 +29,7 @@ public:
 	void ConstructGrid(FIntVector2D Size);
 
 	UFUNCTION(BlueprintCallable)
-	void AddItem(USpatialItemData* ItemData, FIntVector2D Position);
+	void AddItem(USpatialItemData* ItemData, FIntVector2D Position, bool bRotated);
 
 	UFUNCTION(BlueprintCallable)
 	void ToggleInventory(bool bOpen, APlayerController* Interactor);

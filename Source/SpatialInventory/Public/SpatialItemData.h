@@ -65,10 +65,13 @@ struct FSlotData
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bTaken = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bRotated = false;
+
 	FSlotData()
 	{
 		Item = nullptr;
-
+		bRotated = false;
 		bTaken = false;
 	};
 
