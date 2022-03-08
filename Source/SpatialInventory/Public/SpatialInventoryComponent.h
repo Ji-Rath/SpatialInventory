@@ -12,7 +12,7 @@
 class UGridPanel;
 class APlayerController;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FItemAdded, USpatialItemData*, Item, FIntVector2D, Position, bool, bRotated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FItemAdded, USpatialItemData*, Item, FIntVector2D, Position, bool, bRotated, int, Count);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FToggleInventory, bool, bOpen, APlayerController*, Interactor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRotateItem);
 
@@ -40,16 +40,19 @@ public:
 	TArray<FSlotData> Inventory;
 
 	UFUNCTION(BlueprintCallable)
-	bool TryAddItem(USpatialItemData* Item, bool bRotated);
+	bool TryAddItem(USpatialItemData* Item, bool bRotated, int Count = 1);
 
 	UFUNCTION(BlueprintCallable)
-	bool AddToSlot(USpatialItemData* Item, FIntVector2D Position, bool bRotated);
+	bool AddToSlot(USpatialItemData* Item, FIntVector2D Position, bool bRotated, int Count = 1);
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveItem(USpatialItemData* Item, FIntVector2D Position, bool bRotated);
 
 	UFUNCTION(BlueprintCallable)
-	void SetOccupied(bool bOccupied, TArray<FIntVector2D> Positions);
+	bool AddToStack(USpatialItemData* Item, FIntVector2D Position, int Count);
+
+	UFUNCTION(BlueprintCallable)
+	void ClearSlots(TArray<FIntVector2D> Positions);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<FIntVector2D> GetSpaceTaken(FIntVector2D Size, FIntVector2D Position, bool bRotated);
@@ -82,7 +85,7 @@ public:
 	*/
 	bool AddToInventory_Implementation(UItemData* Item, const int Count);
 	
-	bool DoesItemExist_Implementation(UItemData* Item);
+	bool DoesItemExist_Implementation(UItemData* Item, int& OutIndex);
 
 	UPROPERTY(BlueprintAssignable)
 	FItemAdded OnItemAdded;

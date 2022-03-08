@@ -61,25 +61,28 @@ struct FSlotData
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	USpatialItemData* Item = nullptr;
 
-	/** Used when Item is nullptr but the space is still taken */
+	/** Used to identify the primary slot */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bTaken = false;
+	int ParentIndex = -1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bRotated = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int Count = 0;
 
-	FSlotData()
-	{
-		Item = nullptr;
-		bRotated = false;
-		bTaken = false;
-	};
-
-	FSlotData(USpatialItemData* NewItem, bool bIsTaken)
+	FSlotData() {};
+	
+	FSlotData(USpatialItemData* NewItem, int NewParentIndex)
 	{
 		Item = NewItem;
-		bTaken = bIsTaken;
+		ParentIndex = NewParentIndex;
 	};
+
+	bool IsOccupied()
+	{
+		return Item || ParentIndex != -1;
+	}
 };
 
 /**

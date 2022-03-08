@@ -19,7 +19,7 @@ class SPATIALINVENTORY_API UTileBaseWidget : public UUserWidget
 	
 public:	
 	UFUNCTION(BlueprintCallable)
-	bool OnPlaceItem(UDragDropOperation* Operation, FIntVector2D Offset, bool bRotated);
+	bool OnPlaceItem(UDragDropOperation* Operation, FIntVector2D Offset, bool bRotated, int Count = 1);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UInventoryBaseWidget* InventoryWidget = nullptr;

@@ -8,7 +8,7 @@
 #include "SpatialItemData.h"
 #include "InventoryBaseWidget.h"
 
-bool UTileBaseWidget::OnPlaceItem(UDragDropOperation* Operation, FIntVector2D Offset, bool bRotated)
+bool UTileBaseWidget::OnPlaceItem(UDragDropOperation* Operation, FIntVector2D Offset, bool bRotated, int Count)
 {
 	bool bSuccess = false;
 	FIntVector2D ActualPosition = Position + Offset;
@@ -26,21 +26,14 @@ bool UTileBaseWidget::OnPlaceItem(UDragDropOperation* Operation, FIntVector2D Of
 
 			if (ensure(ItemWidget && OtherInventoryComp && ItemWidget->ItemData && InventoryComp))
 			{
-				// Ensure the inventory that we are dropping the item to has space
-				bool bHasSpace = InventoryComp->HasAvailableSpace(ActualPosition, ItemWidget->ItemData->Size, bRotated);
-				if (bHasSpace)
-				{
-					InventoryComp->AddToSlot(ItemWidget->ItemData, ActualPosition, bRotated);
+				bSuccess = InventoryComp->AddToSlot(ItemWidget->ItemData, ActualPosition, bRotated, Count);
 
-					// Update widget position value
-					ItemWidget->Position = ActualPosition;
-					
-					// Reconstruct inventory UI
-					InventoryWidget->ReconstructItems();
-					ItemWidget->InventoryWidget->ReconstructItems();
-
-					bSuccess = true;
-				}
+				// Update widget position value
+				ItemWidget->Position = ActualPosition;
+				
+				// Reconstruct inventory UI
+				InventoryWidget->ReconstructItems();
+				ItemWidget->InventoryWidget->ReconstructItems();
 			}
 		}
 	}

@@ -32,50 +32,69 @@ void USpatialInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	// ...
 }
 
-bool USpatialInventoryComponent::TryAddItem(USpatialItemData* Item, bool bRotated)
+bool USpatialInventoryComponent::TryAddItem(USpatialItemData* Item, bool bRotated, int Count)
 {
 	if (ensure(Item))
 	{
+		// Try to stack if possible
+		int ItemIndex = -1;
+		if (Execute_DoesItemExist(this, Item, ItemIndex))
+		{
+			FIntVector2D ItemPosition = IndexToPos(ItemIndex);
+			if (AddToSlot(Item, ItemPosition, bRotated, Count))
+			{
+				OnItemAdded.Broadcast(Item, ItemPosition, bRotated, Count);
+				return true;
+			}
+		}
+		
 		for (int SlotNum = 0; SlotNum < Inventory.Num(); SlotNum++)
 		{
-			FSlotData Slot = Inventory[SlotNum];
 			FIntVector2D Position = IndexToPos(SlotNum);
-			bool bCanPlaceItem = HasAvailableSpace(Position, Item->Size, bRotated);
 
-			if (bCanPlaceItem)
+			// Simply add to inventory
+			if (AddToSlot(Item, Position, bRotated, Count))
 			{
-				Inventory[SlotNum].Item = Item;
-				Inventory[SlotNum].bRotated = bRotated;
-				TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position, bRotated);
-				SetOccupied(true, SpaceTaken);
-				
-				OnItemAdded.Broadcast(Item, Position, bRotated);
+				OnItemAdded.Broadcast(Item, Position, bRotated, Count);
 				return true;
 			}
 		}
 		// Attempt to place item using rotated dimensions
 		if (!bRotated)
 		{
-			return TryAddItem(Item, true);
+			return TryAddItem(Item, true, Count);
 		}
 	}
 	return false;
 }
 
-bool USpatialInventoryComponent::AddToSlot(USpatialItemData* Item, FIntVector2D Position, bool bRotated)
+bool USpatialInventoryComponent::AddToSlot(USpatialItemData* Item, FIntVector2D Position, bool bRotated, int Count)
 {
+	if (AddToStack(Item, Position, Count))
+	{
+		OnItemAdded.Broadcast(Item, Position, bRotated, Count);
+		return true;
+	}
+	
 	bool bCanPlaceItem = HasAvailableSpace(Position, Item->Size, bRotated);
 
 	if (bCanPlaceItem)
 	{
+		//Set primary slot properties
 		int SlotNum = PosToIndex(Position);
 		Inventory[SlotNum].Item = Item;
 		Inventory[SlotNum].bRotated = bRotated;
-		
+		Inventory[SlotNum].Count = Count;
+
+		//Set child slot properties
 		TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position, bRotated);
-		SetOccupied(true, SpaceTaken);
+		for (FIntVector2D SlotPos : SpaceTaken)
+		{
+			int SlotIndex = PosToIndex(SlotPos);
+			Inventory[SlotIndex].ParentIndex = SlotNum;
+		}
 		
-		OnItemAdded.Broadcast(Item, Position, bRotated);
+		OnItemAdded.Broadcast(Item, Position, bRotated, Count);
 		return true;
 	}
 
@@ -88,21 +107,28 @@ void USpatialInventoryComponent::RemoveItem(USpatialItemData* Item, FIntVector2D
 	Inventory[SlotNum].Item = nullptr;
 
 	TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position, bRotated);
-	SetOccupied(false, SpaceTaken);
+	ClearSlots(SpaceTaken);
 }
 
-void USpatialInventoryComponent::SetOccupied(bool bOccupied, TArray<FIntVector2D> Positions)
+bool USpatialInventoryComponent::AddToStack(USpatialItemData* Item, FIntVector2D Position, int Count)
+{
+	int Index = PosToIndex(Position);
+	int ParentIndex = Inventory[Index].ParentIndex;
+	
+	if (ParentIndex != -1 && Inventory[ParentIndex].Item == Item)
+	{
+		Inventory[ParentIndex].Count += Count;
+		return true;
+	}
+	return false;
+}
+
+void USpatialInventoryComponent::ClearSlots(TArray<FIntVector2D> Positions)
 {
 	for (FIntVector2D SlotPos : Positions)
 	{
 		int SlotIndex = PosToIndex(SlotPos);
-		Inventory[SlotIndex].bTaken = bOccupied;
-		if (!bOccupied)
-		{
-			Inventory[SlotIndex].Item = nullptr;
-		}
-			
-		//UE_LOG(LogTemp, Log, TEXT("SLOT (%d, %d) HAS NOW BEEN TAKEN!"), SlotPos.X, SlotPos.Y);
+		Inventory[SlotIndex] = FSlotData();
 	}
 }
 
@@ -141,7 +167,7 @@ bool USpatialInventoryComponent::HasAvailableSpace(FIntVector2D Position, FIntVe
 				{
 					int IndexToCheck = PosToIndex(FIntVector2D(XPos, YPos));
 					FSlotData SlotCheck = Inventory[IndexToCheck];
-					if (SlotCheck.bTaken)
+					if (SlotCheck.IsOccupied())
 					{
 						return false;
 					}
@@ -196,9 +222,19 @@ bool USpatialInventoryComponent::AddToInventory_Implementation(UItemData* Item, 
 	return IInventoryInterface::AddToInventory_Implementation(Item, Count);
 }
 
-bool USpatialInventoryComponent::DoesItemExist_Implementation(UItemData* Item)
+bool USpatialInventoryComponent::DoesItemExist_Implementation(UItemData* Item, int& OutIndex)
 {
-	return IInventoryInterface::DoesItemExist_Implementation(Item);
+	for(int i=0;i<Inventory.Num();i++)
+	{
+		FSlotData InventorySlot = Inventory[i];
+		if (InventorySlot.Item == Item)
+		{
+			OutIndex = i;
+			return true;
+		}
+	}
+	
+	return IInventoryInterface::DoesItemExist_Implementation(Item, OutIndex);
 }
 
 FIntVector2D USpatialInventoryComponent::IndexToPos(int Index)

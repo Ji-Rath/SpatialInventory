@@ -31,7 +31,7 @@ void UInventoryBaseWidget::ConstructGrid(FIntVector2D Size)
 	}
 }
 
-void UInventoryBaseWidget::AddItem(USpatialItemData* ItemData, FIntVector2D Position, bool bRotated)
+void UInventoryBaseWidget::AddItem(USpatialItemData* ItemData, FIntVector2D Position, bool bRotated, int Count)
 {
 	// Create item widget
 	UItemBaseWidget* Item = CreateWidget<UItemBaseWidget>(GetOwningPlayer(), ItemWidget);
@@ -41,11 +41,17 @@ void UInventoryBaseWidget::AddItem(USpatialItemData* ItemData, FIntVector2D Posi
 	Item->ItemData = ItemData;
 	Item->InventoryWidget = this;
 	Item->bItemRotated = bRotated;
+	Item->Count = Count;
 
 	// Set proper position of item widget
 	UCanvasPanelSlot* CanvasItem = CanvasItems->AddChildToCanvas(Item);
 	CanvasItem->SetAutoSize(true);
 	CanvasItem->SetPosition(FVector2D(Position.X, Position.Y) * 100);
+}
+
+void UInventoryBaseWidget::RefreshInventory(USpatialItemData* ItemData, FIntVector2D Position, bool bRotated, int Count)
+{
+	ReconstructItems();
 }
 
 void UInventoryBaseWidget::ToggleInventory(bool bOpen, APlayerController* Interactor)
@@ -89,10 +95,10 @@ void UInventoryBaseWidget::ReconstructItems()
 	for(int i = 0; i < InventoryReference->Inventory.Num(); i++)
 	{
 		FSlotData SlotData = InventoryReference->Inventory[i];
-		if (SlotData.Item != nullptr && SlotData.bTaken)
+		if (SlotData.Item != nullptr)
 		{
 			FIntVector2D Position = InventoryReference->IndexToPos(i);
-			AddItem(SlotData.Item, Position, SlotData.bRotated);
+			AddItem(SlotData.Item, Position, SlotData.bRotated, SlotData.Count);
 		}
 	}
 }
@@ -107,7 +113,7 @@ bool UInventoryBaseWidget::Initialize()
 		InventoryReference = Actor->FindComponentByClass<USpatialInventoryComponent>();
 		if (InventoryReference)
 		{
-			InventoryReference->OnItemAdded.AddDynamic(this, &UInventoryBaseWidget::AddItem);
+			InventoryReference->OnItemAdded.AddDynamic(this, &UInventoryBaseWidget::RefreshInventory);
 			InventoryReference->OnToggleInventory.AddDynamic(this, &UInventoryBaseWidget::ToggleInventory);
 			ConstructGrid(InventoryReference->InventoryDimensions);
 		}
