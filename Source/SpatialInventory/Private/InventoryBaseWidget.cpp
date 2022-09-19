@@ -13,6 +13,9 @@
 
 void UInventoryBaseWidget::ConstructGrid(FIntVector2D Size)
 {
+	InventoryTiles.Empty();
+	InventoryTiles.Reserve(Size.X*Size.Y);
+	
 	for (int i = 0; i < Size.X; i++)
 	{
 		for (int j = 0; j < Size.Y; j++)
@@ -22,6 +25,7 @@ void UInventoryBaseWidget::ConstructGrid(FIntVector2D Size)
 			{
 				Tile->InventoryWidget = this;
 				Tile->Position = FIntVector2D(i, j);
+				InventoryTiles.Add(Tile);
 
 				if (GridTiles)
 					GridTiles->AddChildToGrid(Tile, j, i);

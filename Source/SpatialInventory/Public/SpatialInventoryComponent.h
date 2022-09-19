@@ -46,7 +46,7 @@ public:
 	bool AddToSlot(USpatialItemData* Item, FIntVector2D Position, bool bRotated, int Count = 1);
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveItem(USpatialItemData* Item, FIntVector2D Position, bool bRotated);
+	void RemoveItem(USpatialItemData* Item, FIntVector2D Position, bool bRotated, int Count = 1);
 
 	UFUNCTION(BlueprintCallable)
 	bool AddToStack(USpatialItemData* Item, FIntVector2D Position, int Count);

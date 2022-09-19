@@ -101,18 +101,24 @@ bool USpatialInventoryComponent::AddToSlot(USpatialItemData* Item, FIntVector2D 
 	return false;
 }
 
-void USpatialInventoryComponent::RemoveItem(USpatialItemData* Item, FIntVector2D Position, bool bRotated)
+void USpatialInventoryComponent::RemoveItem(USpatialItemData* Item, FIntVector2D Position, bool bRotated, int Count)
 {
 	int SlotNum = PosToIndex(Position);
-	Inventory[SlotNum].Item = nullptr;
+	Inventory[SlotNum].Count -= Count;
 
-	TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position, bRotated);
-	ClearSlots(SpaceTaken);
+	if (Inventory[SlotNum].Count <= 0)
+	{
+		TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item->Size, Position, bRotated);
+		ClearSlots(SpaceTaken);
+	}
+	
 }
 
 bool USpatialInventoryComponent::AddToStack(USpatialItemData* Item, FIntVector2D Position, int Count)
 {
 	int Index = PosToIndex(Position);
+	if (!Inventory.IsValidIndex(Index)) { return false; }
+	
 	int ParentIndex = Inventory[Index].ParentIndex;
 	
 	if (ParentIndex != -1 && Inventory[ParentIndex].Item == Item)
