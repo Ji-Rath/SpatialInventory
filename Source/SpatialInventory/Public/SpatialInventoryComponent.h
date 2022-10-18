@@ -12,7 +12,7 @@
 class UGridPanel;
 class APlayerController;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FItemAdded, USpatialItemData*, Item, FIntVector2D, Position, bool, bRotated, int, Count);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FItemAdded, const FDataTableRowHandle&, Item, FIntVector2D, Position, bool, bRotated, int, Count);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FToggleInventory, bool, bOpen, APlayerController*, Interactor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRotateItem);
 
@@ -40,16 +40,16 @@ public:
 	TArray<FSlotData> Inventory;
 
 	UFUNCTION(BlueprintCallable)
-	bool TryAddItem(USpatialItemData* Item, bool bRotated, int Count = 1);
+	bool TryAddItem(const FDataTableRowHandle& Item, bool bRotated, int Count = 1);
 
 	UFUNCTION(BlueprintCallable)
-	bool AddToSlot(USpatialItemData* Item, FIntVector2D Position, bool bRotated, int Count = 1);
+	bool AddToSlot(const FDataTableRowHandle& Item, FIntVector2D Position, bool bRotated, int Count = 1);
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveItem(USpatialItemData* Item, FIntVector2D Position, bool bRotated, int Count = 1);
+	void RemoveItem(const FDataTableRowHandle& Item, FIntVector2D Position, bool bRotated, int Count = 1);
 
 	UFUNCTION(BlueprintCallable)
-	bool AddToStack(USpatialItemData* Item, FIntVector2D Position, int Count);
+	bool AddToStack(const FDataTableRowHandle& Item, FIntVector2D Position, int Count);
 
 	UFUNCTION(BlueprintCallable)
 	void ClearSlots(TArray<FIntVector2D> Positions);
@@ -65,7 +65,7 @@ public:
 
 	/** Get all items stored in the inventory */
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	TArray<USpatialItemData*> GetItems();
+	TArray<FDataTableRowHandle> GetItems();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	int PosToIndex(FIntVector2D Position);
@@ -75,7 +75,7 @@ public:
 	float GetInventoryValue();
 
 	/** Remove an item from current inventory */
-	void RemoveFromInventory_Implementation(const UItemData* Item, const int Count = 1);
+	virtual void RemoveFromInventory_Implementation(const FInventoryContents& Item) override;
 
 	/**
 	 * Attempt to add an item to the inventory
@@ -83,9 +83,9 @@ public:
 	 * @param Count - Amount of item
 	 * @return Whether the item could be added to the inventory
 	*/
-	bool AddToInventory_Implementation(UItemData* Item, const int Count);
+	virtual bool AddToInventory_Implementation(const FInventoryContents& Item) override;
 	
-	bool DoesItemExist_Implementation(UItemData* Item, int& OutIndex);
+	bool DoesItemExist_Implementation(const FInventoryContents& Item);
 
 	UPROPERTY(BlueprintAssignable)
 	FItemAdded OnItemAdded;

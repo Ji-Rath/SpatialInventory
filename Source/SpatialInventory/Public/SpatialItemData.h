@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Interaction/ItemData.h"
+#include "Inventory/InventoryInfo.h"
 #include "SpatialItemData.generated.h"
 
+class UTexture2D;
 class USpatialItemData;
 USTRUCT(BlueprintType)
 struct FIntVector2D
@@ -53,13 +55,9 @@ struct FIntVector2D
 };
 
 USTRUCT(BlueprintType)
-struct FSlotData
+struct FSlotData : public FInventoryContents
 {
 	GENERATED_USTRUCT_BODY()
-
-	/** Store a reference of the item data when this is the primary slot */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	USpatialItemData* Item = nullptr;
 
 	/** Used to identify the primary slot */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -67,21 +65,19 @@ struct FSlotData
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bRotated = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int Count = 0;
 
 	FSlotData() {};
 	
-	FSlotData(USpatialItemData* NewItem, int NewParentIndex)
+	FSlotData(const FDataTableRowHandle& Item, int Amount, int Parent)
 	{
-		Item = NewItem;
-		ParentIndex = NewParentIndex;
-	};
+		RowHandle = Item;
+		Count = Amount;
+		ParentIndex = Parent;
+	}
 
-	bool IsOccupied()
+	bool IsOccupied() const
 	{
-		return Item || ParentIndex != -1;
+		return !IsNull() || ParentIndex != -1;
 	}
 };
 
@@ -101,7 +97,7 @@ public:
 
 	/** Size that the item takes up in inventory */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FIntVector2D Size = FIntVector2D();
+	FIntVector2D Dimensions = FIntVector2D();
 
 	/** The value of the item */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

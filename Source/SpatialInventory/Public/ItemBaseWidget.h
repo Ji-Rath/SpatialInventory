@@ -24,7 +24,7 @@ public:
 	void ConstructGrid(FIntVector2D Size, bool bRotated);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ExposeOnSpawn = "true"))
-	USpatialItemData* ItemData = nullptr;
+	FSlotData ItemData;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ExposeOnSpawn = "true"))
 	FIntVector2D Position;

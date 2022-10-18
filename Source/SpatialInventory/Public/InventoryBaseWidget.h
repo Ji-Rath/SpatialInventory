@@ -30,11 +30,11 @@ public:
 	void ConstructGrid(FIntVector2D Size);
 
 	UFUNCTION(BlueprintCallable)
-	void AddItem(USpatialItemData* ItemData, FIntVector2D Position, bool bRotated, int Count);
+	void AddItem(const FSlotData& ItemData, const FIntVector2D& Position);
 
 	/** Used to reconstruct inventory when inventory is changed */
 	UFUNCTION()
-	void RefreshInventory(USpatialItemData* ItemData, FIntVector2D Position, bool bRotated, int Count);
+	void RefreshInventory(const FDataTableRowHandle& ItemData, FIntVector2D Position, bool bRotated, int Count);
 
 	UFUNCTION(BlueprintCallable)
 	void ToggleInventory(bool bOpen, APlayerController* Interactor);

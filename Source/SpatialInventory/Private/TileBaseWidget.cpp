@@ -24,9 +24,9 @@ bool UTileBaseWidget::OnPlaceItem(UDragDropOperation* Operation, FIntVector2D Of
 			USpatialInventoryComponent* OtherInventoryComp = ItemWidget->InventoryWidget->InventoryReference;
 			USpatialInventoryComponent* InventoryComp = InventoryWidget->InventoryReference;
 
-			if (ensure(ItemWidget && OtherInventoryComp && ItemWidget->ItemData && InventoryComp))
+			if (ensure(ItemWidget && OtherInventoryComp && !ItemWidget->ItemData.IsNull() && InventoryComp))
 			{
-				bSuccess = InventoryComp->AddToSlot(ItemWidget->ItemData, ActualPosition, bRotated, Count);
+				bSuccess = InventoryComp->AddToSlot(ItemWidget->ItemData.RowHandle, ActualPosition, bRotated, Count);
 
 				// Update widget position value
 				ItemWidget->Position = ActualPosition;
