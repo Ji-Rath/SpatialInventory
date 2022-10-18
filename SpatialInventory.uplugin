@@ -16,9 +16,9 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"name": "SpatialInventory",
-			"type": "Runtime",
-			"loadingPhase": "Default"
+			"Name": "SpatialInventory",
+			"Type": "Runtime",
+			"loadingPhase": "PreDefault"
 		}
 	],
 	"Plugins": [
