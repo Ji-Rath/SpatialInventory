@@ -20,7 +20,7 @@ void UInventoryBaseWidget::ConstructGrid(FIntVector2D Size)
 	{
 		for (int j = 0; j < Size.Y; j++)
 		{
-			UTileBaseWidget* Tile = CreateWidget<UTileBaseWidget>(GetOwningPlayer(), SlotWidget);
+			UTileBaseWidget* Tile = CreateWidget<UTileBaseWidget>(this, SlotWidget);
 			if (Tile)
 			{
 				Tile->InventoryWidget = this;
@@ -38,7 +38,7 @@ void UInventoryBaseWidget::ConstructGrid(FIntVector2D Size)
 void UInventoryBaseWidget::AddItem(const FSlotData& ItemData, const FIntVector2D& Position)
 {
 	// Create item widget
-	UItemBaseWidget* Item = CreateWidget<UItemBaseWidget>(GetOwningPlayer(), ItemWidget);
+	UItemBaseWidget* Item = CreateWidget<UItemBaseWidget>(this, ItemWidget);
 
 	// Set values of new item widget
 	Item->Position = Position;
@@ -105,14 +105,13 @@ void UInventoryBaseWidget::ReconstructItems()
 	}
 }
 
-bool UInventoryBaseWidget::Initialize()
+void UInventoryBaseWidget::SetOwner(AActor* NewOwner)
 {
-	bool bSuccess = Super::Initialize();
+	Owner = NewOwner;
 	
-	AActor* Actor = UGameplayStatics::GetActorOfClass(GetWorld(), ActorTarget);
-	if (Actor)
+	if (Owner)
 	{
-		InventoryReference = Actor->FindComponentByClass<USpatialInventoryComponent>();
+		InventoryReference = Owner->FindComponentByClass<USpatialInventoryComponent>();
 		if (InventoryReference)
 		{
 			InventoryReference->OnItemAdded.AddDynamic(this, &UInventoryBaseWidget::RefreshInventory);
@@ -120,6 +119,13 @@ bool UInventoryBaseWidget::Initialize()
 			ConstructGrid(InventoryReference->InventoryDimensions);
 		}
 	}
+}
+
+bool UInventoryBaseWidget::Initialize()
+{
+	bool bSuccess = Super::Initialize();
+
+	SetOwner(Owner);
 
 	return bSuccess;
 }

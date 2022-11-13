@@ -12,7 +12,7 @@ class USpatialItemData;
 USTRUCT(BlueprintType)
 struct FIntVector2D
 {
-	GENERATED_USTRUCT_BODY()
+	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int X = 1;
@@ -103,4 +103,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float ItemValue = 0.f;
 
+};
+
+USTRUCT(BlueprintType)
+struct SPATIALINVENTORY_API FSpatialItemInfo : public FItemInfo
+{
+	GENERATED_BODY();
+
+	/** Texture of item */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UTexture2D* ItemIcon = nullptr;
+
+	/** Size that the item takes up in inventory */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FIntVector2D Dimensions = FIntVector2D();
+
+	/** The value of the item */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float ItemValue = 0.f;
 };

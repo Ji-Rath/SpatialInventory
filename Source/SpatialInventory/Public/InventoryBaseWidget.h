@@ -14,7 +14,7 @@ class UCanvasPanel;
 class UWidgetAnimation;
 
 /**
- * 
+ * The widget to create to display a spactial inventory
  */
 UCLASS()
 class SPATIALINVENTORY_API UInventoryBaseWidget : public UUserWidget
@@ -42,12 +42,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ReconstructItems();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AActor> ActorTarget;
+	UFUNCTION(BlueprintCallable)
+	void SetOwner(AActor* NewOwner);
 
+	/**
+	 * @brief The widget class that signifies a single grid slot
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UUserWidget> SlotWidget;
 
+	/**
+	 * @brief The widget class that signifies an item
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UUserWidget> ItemWidget;
 
@@ -66,4 +72,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<UTileBaseWidget*> InventoryTiles;
 
+	/**
+	 * @brief The owner to retrieve the spatial inventory component from
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ExposeOnSpawn=true))
+	AActor* Owner;
 };
