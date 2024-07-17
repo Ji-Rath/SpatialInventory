@@ -7,9 +7,6 @@ public class SpatialInventory : ModuleRules
 	{
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "UMG", "SlateCore", "CoreUObject", "Slate", "InputCore", "InteractionSystem"});
-
-		PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
-		PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "UMG", "SlateCore", "CoreUObject", "Slate", "InputCore", "InteractionSystem", "StructUtils"});
 	}
 }

@@ -9,6 +9,8 @@
 
 class UTexture2D;
 class USpatialItemData;
+
+// Wrapper for FIntVector2D
 USTRUCT(BlueprintType)
 struct FIntVector2D
 {
@@ -54,71 +56,27 @@ struct FIntVector2D
 	}
 };
 
+// Information about a specific slot in the grid inventory
 USTRUCT(BlueprintType)
-struct FSlotData : public FInventoryContents
+struct SPATIALINVENTORY_API FSlotData
 {
-	GENERATED_USTRUCT_BODY()
+	GENERATED_BODY()
 
-	/** Used to identify the primary slot */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int ParentIndex = -1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bRotated = false;
-
-	FSlotData() {};
-	
-	FSlotData(const FDataTableRowHandle& Item, int Amount, int Parent)
-	{
-		RowHandle = Item;
-		Count = Amount;
-		ParentIndex = Parent;
-	}
-
-	bool IsOccupied() const
-	{
-		return !IsNull() || ParentIndex != -1;
-	}
+	// The origin of the item
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FIntVector2D Position = FIntVector2D(-1);
 };
 
 /**
  * 
  */
 UCLASS(BlueprintType)
-class SPATIALINVENTORY_API USpatialItemData : public UItemData
+class SPATIALINVENTORY_API USpatialItemData : public UItemInformation
 {
 	GENERATED_BODY()
 
 public:
-
-	/** Texture of item */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UTexture2D* ItemIcon = nullptr;
-
 	/** Size that the item takes up in inventory */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FIntVector2D Dimensions = FIntVector2D();
-
-	/** The value of the item */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float ItemValue = 0.f;
-
-};
-
-USTRUCT(BlueprintType)
-struct SPATIALINVENTORY_API FSpatialItemInfo : public FItemInfo
-{
-	GENERATED_BODY();
-
-	/** Texture of item */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UTexture2D* ItemIcon = nullptr;
-
-	/** Size that the item takes up in inventory */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FIntVector2D Dimensions = FIntVector2D();
-
-	/** The value of the item */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float ItemValue = 0.f;
 };

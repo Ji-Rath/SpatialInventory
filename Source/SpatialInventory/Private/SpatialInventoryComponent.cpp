@@ -4,14 +4,16 @@
 #include "SpatialInventoryComponent.h"
 #include "SpatialItemData.h"
 
+DEFINE_LOG_CATEGORY(LogSpatialInventory)
+
 // Sets default values for this component's properties
 USpatialInventoryComponent::USpatialInventoryComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
-	
+	InventoryDimensions = FIntVector2D(10, 10);
 }
 
 
@@ -19,255 +21,100 @@ USpatialInventoryComponent::USpatialInventoryComponent()
 void USpatialInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	Inventory.AddDefaulted(InventoryDimensions.X * InventoryDimensions.Y);
 }
 
-
-// Called every frame
-void USpatialInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+bool USpatialInventoryComponent::FindFreeSlot(const FInventoryContents& Item, FIntVector2D& OutPosition) const
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
-}
-
-bool USpatialInventoryComponent::TryAddItem(const FDataTableRowHandle& Item, bool bRotated, int Count)
-{
-	if (ensure(!Item.IsNull()))
+	for(int y=0;y<InventoryDimensions.Y;y++)
 	{
-		// Try to stack if possible
-		int ItemIndex = -1;
-		if (Execute_DoesItemExist(this, Item))
+		for(int x=0;x<InventoryDimensions.X;x++)
 		{
-			FIntVector2D ItemPosition = IndexToPos(ItemIndex);
-			if (AddToSlot(Item, ItemPosition, bRotated, Count))
+			auto SpatialData = Item.GetItemInformation<USpatialItemData>();
+			if (CanPlaceItem(SpatialData->Dimensions, FIntVector2D(x, y)))
 			{
-				OnItemAdded.Broadcast(Item, ItemPosition, bRotated, Count);
+				OutPosition = FIntVector2D(x, y);
 				return true;
 			}
 		}
+	}
+	return false;
+}
+
+bool USpatialInventoryComponent::IsSlotTaken(const FIntVector2D& Position) const
+{
+	for (const auto& InventoryContents : Inventory)
+	{
+		auto StaticData = Cast<USpatialItemData>(InventoryContents.ItemInformation);
+		if (!StaticData) { return false; }
 		
-		for (int SlotNum = 0; SlotNum < Inventory.Num(); SlotNum++)
-		{
-			FIntVector2D Position = IndexToPos(SlotNum);
+		const auto& SlotData = InventoryContents.DynamicData.Get<FSlotData>();
+		auto ItemPosition = SlotData.Position;
+		auto Dimensions = StaticData->Dimensions;
 
-			// Simply add to inventory
-			if (AddToSlot(Item, Position, bRotated, Count))
-			{
-				OnItemAdded.Broadcast(Item, Position, bRotated, Count);
-				return true;
-			}
-		}
-		// Attempt to place item using rotated dimensions
-		if (!bRotated)
-		{
-			return TryAddItem(Item, true, Count);
-		}
-	}
-	return false;
-}
+		// If position is not valid (item has not been placed in inventory), skip it
+		if (ItemPosition.X < 0 || ItemPosition.Y < 0) { continue; }
 
-bool USpatialInventoryComponent::AddToSlot(const FDataTableRowHandle& Item, FIntVector2D Position, bool bRotated, int Count)
-{
-	if (AddToStack(Item, Position, Count))
-	{
-		OnItemAdded.Broadcast(Item, Position, bRotated, Count);
-		return true;
-	}
-
-	bool bCanPlaceItem = false;
-	if (FSpatialItemInfo* ItemInfo = Item.GetRow<FSpatialItemInfo>("Dimensions"))
-		bCanPlaceItem = HasAvailableSpace(Position, ItemInfo->Dimensions, bRotated);
-	else
-		return false;
-
-	if (bCanPlaceItem)
-	{
-		//Set primary slot properties
-		int SlotNum = PosToIndex(Position);
-		Inventory[SlotNum].RowHandle = Item;
-		Inventory[SlotNum].bRotated = bRotated;
-		Inventory[SlotNum].Count = Count;
-
-		//Set child slot properties
-		TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(Item.GetRow<FSpatialItemInfo>("Dimensions")->Dimensions, Position, bRotated);
-		for (FIntVector2D SlotPos : SpaceTaken)
-		{
-			int SlotIndex = PosToIndex(SlotPos);
-			Inventory[SlotIndex].ParentIndex = SlotNum;
-		}
+		bool bWithinXBounds = Position.X >= ItemPosition.X && Position.X < (Dimensions.X+ItemPosition.X);
+		bool bWithinYBounds = Position.Y >= ItemPosition.Y && Position.Y < (Dimensions.Y+ItemPosition.Y);
 		
-		OnItemAdded.Broadcast(Item, Position, bRotated, Count);
-		return true;
-	}
-
-	return false;
-}
-
-void USpatialInventoryComponent::RemoveItem(const FDataTableRowHandle& Item, FIntVector2D Position, bool bRotated, int Count)
-{
-	int SlotNum = PosToIndex(Position);
-	Inventory[SlotNum].Count -= Count;
-
-	if (Inventory[SlotNum].Count <= 0)
-	{
-		TArray<FIntVector2D> SpaceTaken = GetSpaceTaken(*Item.GetRow<FIntVector2D>("Dimensions"), Position, bRotated);
-		ClearSlots(SpaceTaken);
-	}
-	
-}
-
-bool USpatialInventoryComponent::AddToStack(const FDataTableRowHandle& Item, FIntVector2D Position, int Count)
-{
-	int Index = PosToIndex(Position);
-	if (!Inventory.IsValidIndex(Index)) { return false; }
-	
-	int ParentIndex = Inventory[Index].ParentIndex;
-	
-	if (ParentIndex != -1 && Inventory[ParentIndex].RowHandle == Item)
-	{
-		Inventory[ParentIndex].Count += Count;
-		return true;
-	}
-	return false;
-}
-
-void USpatialInventoryComponent::ClearSlots(TArray<FIntVector2D> Positions)
-{
-	for (FIntVector2D SlotPos : Positions)
-	{
-		int SlotIndex = PosToIndex(SlotPos);
-		Inventory[SlotIndex] = FSlotData();
-	}
-}
-
-TArray<FIntVector2D> USpatialInventoryComponent::GetSpaceTaken(FIntVector2D Size, FIntVector2D Position, bool bRotated)
-{
-	TArray<FIntVector2D> FreeSlots;
-	int XSize = bRotated ? Size.Y : Size.X;
-	int YSize = bRotated ? Size.X : Size.Y;
-	
-	for (int XPos = Position.X; XPos < XSize + Position.X; XPos++)
-	{
-		for (int YPos = Position.Y; YPos < YSize + Position.Y; YPos++)
+		if (bWithinXBounds && bWithinYBounds)
 		{
-			FreeSlots.Add(FIntVector2D(XPos, YPos));
+			return true;
 		}
 	}
-
-	return FreeSlots;
+	
+	return false;
 }
 
-bool USpatialInventoryComponent::HasAvailableSpace(FIntVector2D Position, FIntVector2D ItemSize, bool bRotated)
+bool USpatialInventoryComponent::CanPlaceItem(const FIntVector2D& Dimensions, const FIntVector2D& Position) const
 {
-	TArray<FIntVector2D> FreeSlots;
-
-	int XSize = bRotated ? ItemSize.Y : ItemSize.X;
-	int YSize = bRotated ? ItemSize.X : ItemSize.Y;
-	
-	for (int XPos = Position.X; XPos < XSize+Position.X; XPos++)
+	for(int x=0;x<Dimensions.X;x++)
 	{
-		if (XPos >= 0 && XPos < InventoryDimensions.X)
+		for(int y=0;y<Dimensions.Y;y++)
 		{
-			for (int YPos = Position.Y; YPos < YSize+Position.Y; YPos++)
+			bool bOutOfBounds = Position.X + x >= InventoryDimensions.X || Position.Y + y >= InventoryDimensions.Y;
+			if (bOutOfBounds || IsSlotTaken(Position + FIntVector2D(x, y)))
 			{
-				//First make sure slot that we are checking is not out of bounds
-				if (YPos >= 0 && YPos < InventoryDimensions.Y)
-				{
-					int IndexToCheck = PosToIndex(FIntVector2D(XPos, YPos));
-					FSlotData SlotCheck = Inventory[IndexToCheck];
-					if (SlotCheck.IsOccupied())
-					{
-						return false;
-					}
-					else
-					{
-						FreeSlots.Add(FIntVector2D(XPos, YPos));
-					}
-				}
-				else
-				{
-					return false;
-				}
+				return false;
 			}
-		}
-		else
-		{
-			return false;
 		}
 	}
 	
 	return true;
 }
 
-int USpatialInventoryComponent::PosToIndex(FIntVector2D Position)
+bool USpatialInventoryComponent::CanAddToInventory(const FInventoryContents& Item) const
 {
-	int ReturnIndex = 0;
-	ReturnIndex += Position.X;
-	ReturnIndex += Position.Y * InventoryDimensions.X;
-
-	return ReturnIndex;
-
+	FIntVector2D Position;
+	return FindFreeSlot(Item, Position);
 }
 
-float USpatialInventoryComponent::GetInventoryValue()
+bool USpatialInventoryComponent::AddToInventory(const FInventoryContents& Item, FItemHandle& OutItemHandle)
 {
-	float Value = 0.f;
-	TArray<FDataTableRowHandle> Items = GetItems();
-	for (const FDataTableRowHandle& Item : Items)
+	if (Super::AddToInventory(Item, OutItemHandle))
 	{
-		// todo: reimplement this doo doo - throws compile error
-		//Value += *(Item.GetRow<float>("ItemValue"));
-	}
-	return Value;
-}
-
-void USpatialInventoryComponent::RemoveFromInventory_Implementation(const FInventoryContents& Item)
-{
-	IInventoryInterface::RemoveFromInventory_Implementation(Item);
-}
-
-bool USpatialInventoryComponent::AddToInventory_Implementation(const FInventoryContents& Item)
-{
-	return TryAddItem(Item.RowHandle, false, Item.Count);
-}
-
-bool USpatialInventoryComponent::DoesItemExist_Implementation(const FInventoryContents& Item)
-{
-	for(int i=0;i<Inventory.Num();i++)
-	{
-		FSlotData InventorySlot = Inventory[i];
-		if (InventorySlot.RowHandle == Item.RowHandle)
+		if (auto ItemData = Inventory.FindByKey(OutItemHandle))
 		{
+			FIntVector2D Position;
+			FindFreeSlot(Item, Position);
+			ItemData->DynamicData.GetMutable<FSlotData>().Position = Position;
+			UE_LOG(LogSpatialInventory, Log, TEXT("Added item %s to inventory at (%d, %d)"), *Item.ItemInformation->DisplayName.ToString(), Position.X, Position.Y);
 			return true;
 		}
 	}
+	return false;
+}
+
+FInventoryContents USpatialInventoryComponent::GenerateItem(UItemInformation* ItemInfo,
+	const FInstancedStruct& DynamicData, int Count) const
+{
+	check(ItemInfo->IsA<USpatialItemData>())
 	
-	return IInventoryInterface::DoesItemExist_Implementation(Item.RowHandle);
-}
-
-FIntVector2D USpatialInventoryComponent::IndexToPos(int Index)
-{
-	FIntVector2D ReturnPosition;
-
-	ReturnPosition.Y = Index / InventoryDimensions.X;
-	ReturnPosition.X = Index % InventoryDimensions.X;
-
-	return ReturnPosition;
-}
-
-TArray<FDataTableRowHandle> USpatialInventoryComponent::GetItems()
-{
-	TArray<FDataTableRowHandle> Items;
-	for (FSlotData Slot : Inventory)
+	FInstancedStruct NewDynamicData = DynamicData;
+	if (!DynamicData.IsValid())
 	{
-		if (!Slot.IsNull())
-		{
-			Items.Add(Slot.RowHandle);
-		}
+		NewDynamicData = FInstancedStruct(FSlotData::StaticStruct());
 	}
-	return Items;
+	
+	return Super::GenerateItem(ItemInfo, NewDynamicData, Count);
 }
-
-
