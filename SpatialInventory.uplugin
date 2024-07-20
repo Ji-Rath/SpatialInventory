@@ -18,12 +18,16 @@
 		{
 			"Name": "SpatialInventory",
 			"Type": "Runtime",
-			"loadingPhase": "PreDefault"
+			"LoadingPhase": "PreDefault"
 		}
 	],
 	"Plugins": [
 		{
 			"Name": "InteractionSystem",
+			"Enabled": true
+		},
+		{
+			"Name": "StructUtils",
 			"Enabled": true
 		}
 	]

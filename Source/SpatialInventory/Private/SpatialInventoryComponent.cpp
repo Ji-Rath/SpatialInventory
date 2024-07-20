@@ -118,3 +118,32 @@ FInventoryContents USpatialInventoryComponent::GenerateItem(UItemInformation* It
 	
 	return Super::GenerateItem(ItemInfo, NewDynamicData, Count);
 }
+
+bool USpatialInventoryComponent::MoveItem(const FItemHandle& Item, const FIntVector2D& NewPosition)
+{
+	ServerMoveItem(Item, NewPosition);
+	return PerformMove(Item, NewPosition);
+}
+
+bool USpatialInventoryComponent::PerformMove(const FItemHandle& Item, const FIntVector2D& NewPosition)
+{
+	auto InventoryContents = Inventory.FindByKey(Item);
+	if (!InventoryContents) { return false; }
+	
+	auto SpatialData = InventoryContents->GetItemInformation<USpatialItemData>();
+	
+	if (CanPlaceItem(SpatialData->Dimensions, NewPosition))
+	{
+		auto SlotData = InventoryContents->DynamicData.GetMutablePtr<FSlotData>();
+		SlotData->Position = NewPosition;
+		UE_LOG(LogSpatialInventory, Log, TEXT("Moved item %s to (%d, %d)"), *InventoryContents->ItemInformation->DisplayName.ToString(), NewPosition.X, NewPosition.Y);
+		OnRep_Inventory();
+		return true;
+	}
+	return false;
+}
+
+void USpatialInventoryComponent::ServerMoveItem_Implementation(const FItemHandle& Item, const FIntVector2D& NewPosition)
+{
+	PerformMove(Item, NewPosition);
+}

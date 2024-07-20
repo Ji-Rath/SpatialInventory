@@ -41,6 +41,19 @@ public:
 
 	virtual FInventoryContents GenerateItem(UItemInformation* ItemInfo, const FInstancedStruct& DynamicData, int Count) const override;
 
+	// Move an item in the inventory. Predicatively moves on the client if possible
+	UFUNCTION(BlueprintCallable)
+	virtual bool MoveItem(const FItemHandle& Item, const FIntVector2D& NewPosition);
+
+private:
+	// Perform move on the server
+	UFUNCTION(Server, Reliable)
+	virtual void ServerMoveItem(const FItemHandle& Item, const FIntVector2D& NewPosition);
+
+	// Actually perform the move operation
+	virtual bool PerformMove(const FItemHandle& Item, const FIntVector2D& NewPosition);
+
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory|Spatial")
 	FIntVector2D InventoryDimensions;
 };
