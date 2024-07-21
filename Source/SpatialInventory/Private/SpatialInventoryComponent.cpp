@@ -40,10 +40,12 @@ bool USpatialInventoryComponent::FindFreeSlot(const FInventoryContents& Item, FI
 	return false;
 }
 
-bool USpatialInventoryComponent::IsSlotTaken(const FIntVector2D& Position) const
+bool USpatialInventoryComponent::IsSlotTaken(const FIntVector2D& Position, const TArray<FItemHandle>& IgnoreItems) const
 {
 	for (const auto& InventoryContents : Inventory)
 	{
+		if (IgnoreItems.Contains(InventoryContents.ItemHandle)) { continue; }
+		
 		auto StaticData = Cast<USpatialItemData>(InventoryContents.ItemInformation);
 		if (!StaticData) { return false; }
 		
@@ -66,14 +68,14 @@ bool USpatialInventoryComponent::IsSlotTaken(const FIntVector2D& Position) const
 	return false;
 }
 
-bool USpatialInventoryComponent::CanPlaceItem(const FIntVector2D& Dimensions, const FIntVector2D& Position) const
+bool USpatialInventoryComponent::CanPlaceItem(const FIntVector2D& Dimensions, const FIntVector2D& Position, const TArray<FItemHandle>& IgnoreItems) const
 {
 	for(int x=0;x<Dimensions.X;x++)
 	{
 		for(int y=0;y<Dimensions.Y;y++)
 		{
 			bool bOutOfBounds = Position.X + x >= InventoryDimensions.X || Position.Y + y >= InventoryDimensions.Y;
-			if (bOutOfBounds || IsSlotTaken(Position + FIntVector2D(x, y)))
+			if (bOutOfBounds || IsSlotTaken(Position + FIntVector2D(x, y), IgnoreItems))
 			{
 				return false;
 			}
@@ -81,6 +83,11 @@ bool USpatialInventoryComponent::CanPlaceItem(const FIntVector2D& Dimensions, co
 	}
 	
 	return true;
+}
+
+bool USpatialInventoryComponent::CanPlaceItem(const FIntVector2D& Dimensions, const FIntVector2D& Position) const
+{
+	return CanPlaceItem(Dimensions, Position, {});
 }
 
 bool USpatialInventoryComponent::CanAddToInventory(const FInventoryContents& Item) const
@@ -121,18 +128,26 @@ FInventoryContents USpatialInventoryComponent::GenerateItem(UItemInformation* It
 
 bool USpatialInventoryComponent::MoveItem(const FItemHandle& Item, const FIntVector2D& NewPosition)
 {
-	ServerMoveItem(Item, NewPosition);
-	return PerformMove(Item, NewPosition);
+	bool bSuccess = PerformMove(Item, NewPosition);
+	if (bSuccess)
+	{
+		ServerMoveItem(Item, NewPosition);
+	}
+	
+	return bSuccess;
 }
 
 bool USpatialInventoryComponent::PerformMove(const FItemHandle& Item, const FIntVector2D& NewPosition)
 {
+	// Do not move if the item is already in the new position
+	if (GetItemByHandle(Item).DynamicData.Get<FSlotData>().Position == NewPosition) { return false; }
+	
 	auto InventoryContents = Inventory.FindByKey(Item);
 	if (!InventoryContents) { return false; }
 	
 	auto SpatialData = InventoryContents->GetItemInformation<USpatialItemData>();
 	
-	if (CanPlaceItem(SpatialData->Dimensions, NewPosition))
+	if (CanPlaceItem(SpatialData->Dimensions, NewPosition, {Item}))
 	{
 		auto SlotData = InventoryContents->DynamicData.GetMutablePtr<FSlotData>();
 		SlotData->Position = NewPosition;

@@ -29,10 +29,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual bool FindFreeSlot(const FInventoryContents& Item, FIntVector2D& OutPosition) const;
 
-	UFUNCTION(BlueprintCallable)
-	virtual bool IsSlotTaken(const FIntVector2D& Position) const;
+	UFUNCTION(BlueprintCallable, meta=(AutoCreateRefTerm="IgnoreItems"))
+	virtual bool IsSlotTaken(const FIntVector2D& Position, const TArray<FItemHandle>& IgnoreItems) const;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, meta=(AutoCreateRefTerm="IgnoreItems"))
+	virtual bool CanPlaceItem(const FIntVector2D& Dimensions, const FIntVector2D& Position, const TArray<FItemHandle>& IgnoreItems) const;
+	
 	virtual bool CanPlaceItem(const FIntVector2D& Dimensions, const FIntVector2D& Position) const;
 
 	virtual bool CanAddToInventory(const FInventoryContents& Item) const override;
